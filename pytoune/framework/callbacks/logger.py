@@ -3,20 +3,22 @@ from .callbacks import Callback
 
 
 class Logger(Callback):
-    def __init__(self, *, batch_granularity=False):
+    def __init__(self, *, batch_granularity=False, custom_fieldnames=[]):
         super().__init__()
         self.batch_granularity = batch_granularity
+        self.custom_fieldnames = custom_fieldnames
         self.epoch = 0
 
     def on_train_begin(self, logs):
         metrics = ['loss'] + self.model.metrics_names
 
         if self.batch_granularity:
-            self.fieldnames = ['epoch', 'batch', 'size', 'lr']
+            self.fieldnames = ['epoch', 'batch', 'size', 'time', 'lr']
         else:
-            self.fieldnames = ['epoch', 'lr']
+            self.fieldnames = ['epoch', 'time', 'lr']
         self.fieldnames += metrics
         self.fieldnames += ['val_' + metric for metric in metrics]
+        self.fieldnames += self.custom_fieldnames
         self._on_train_begin_write(logs)
 
     def _on_train_begin_write(self, logs):
@@ -71,8 +73,8 @@ class CSVLogger(Logger):
         append (bool): Whether to append to an existing file.
 
     """
-    def __init__(self, filename, *, batch_granularity=False, separator=',', append=False):
-        super().__init__(batch_granularity=batch_granularity)
+    def __init__(self, filename, *, batch_granularity=False, custom_fieldnames=[], separator=',', append=False):
+        super().__init__(batch_granularity=batch_granularity, custom_fieldnames=custom_fieldnames)
         self.filename = filename
         self.separator = separator
         self.append = append
@@ -120,7 +122,7 @@ class TensorBoardLogger(Logger):
             model.fit_generator(..., callbacks=[tb_logger])
     """
     def __init__(self, writer):
-        super().__init__(batch_granularity=False)
+        super().__init__(batch_granularity=False, custom_fieldnames=[])
         self.writer = writer
 
     def _on_batch_end_write(self, batch, logs):

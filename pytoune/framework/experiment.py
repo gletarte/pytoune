@@ -230,7 +230,7 @@ class Experiment:
 
     def train(self, train_loader, valid_loader=None, *,
               callbacks=[], lr_schedulers=[], save_every_epoch=False,
-              disable_tensorboard=False,
+              disable_tensorboard=False, custom_fieldnames=[],
               epochs=1000, steps_per_epoch=None, validation_steps=None,
               seed=42):
         if seed is not None:
@@ -251,7 +251,8 @@ class Experiment:
             # Restarting optimization if needed.
             initial_epoch = self._load_epoch_state(lr_schedulers)
 
-            callbacks += [CSVLogger(self.log_filename, separator='\t', append=initial_epoch != 1)]
+            callbacks += [CSVLogger(self.log_filename, separator='\t', append=initial_epoch != 1, \
+                                                                        custom_fieldnames=custom_fieldnames)]
 
             callbacks += self._init_model_restoring_callbacks(initial_epoch, save_every_epoch)
             callbacks += [ModelCheckpoint(
